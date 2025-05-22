@@ -68,15 +68,11 @@ echo -n "GRAN TOTAL 2021: "
 cut -d, -f7 ingresos_2021 | awk '{sum += $1} END {print sum}'
 
 ## Explicación:
-
 1. Filtrado por año: Cambiamos `grep ",Enero,2021,"` por `grep ",2021,"` para capturar todos los meses del año.
-
 2. Archivos temporales: Renombramos los archivos temporales a `ingresos_2021` y `estaciones_2021` para reflejar el nuevo alcance.
-
 3. Mismo principio de cálculo: Mantenemos la misma lógica de suma pero aplicada a todo el año.
 
 ## Versión con awk:
-
 echo "Total de ingresos por estación en 2021:"
 awk -F, '$3 == "2021" {a[$5] += $7} END {for (i in a) print i ": " a[i]}' afluenciastc_desglosado_02_2025.csv
 
@@ -159,4 +155,4 @@ TOTAL=$(awk -F, '{sum += $7} END {print sum}' afluenciastc_desglosado_02_2025.cs
 echo "El total de ingresos acumulados para todas las estaciones (2021-2025) es:"
 printf "%'d\n" $TOTAL
 
-El script maneja automáticamente casos como la estación "Chabacano" que aparece en múltiples líneas, sumando todos sus ingresos independientemente de la línea a la que corresponda cada registro.
+El script maneja los casos como la estación "Chabacano" que aparece en múltiples líneas, sumando todos sus ingresos independientemente de la línea a la que corresponda cada registro.
