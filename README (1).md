@@ -41,11 +41,8 @@ cut -d, -f7 ingresos_enero_2021 | awk '{sum += $1} END {print sum}'
 
 ## Explicación:
 1. Filtrado por mes y año: Usamos `grep ",Enero,2021,"` para capturar todos los registros de enero 2021, independientemente de la línea.
-
 2. Lista de estaciones únicas: `cut -d, -f5 | sort | uniq` obtiene los nombres de todas las estaciones que tuvieron actividad en enero 2021.
-
 3. Cálculo por estación: Para cada estación, sumamos todos los valores de afluencia (columna 7) donde aparece su nombre.
-
 4. Gran total: Sumamos directamente todos los valores de la columna 7 del archivo filtrado para obtener el total general.
 
 
