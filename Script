@@ -1,0 +1,63 @@
+## Script para generar el archivo .csv
+#!/bin/bash
+
+BASE_PATH="/LUSTRE/tmp/temp/estaciones-ENP/"
+OUTPUT_FILE="datos_estaciones_mensuales.csv"
+
+# Encabezado del archivo CSV
+echo "Estacion,Longitud,Latitud,Tmax,Pmax,Date" > "$OUTPUT_FILE"
+
+# Recolectamos todos los datos
+declare -A datos_estaciones
+
+# Procesar cada mes (1 a 12)
+for mes in 1 2 3 4 5 6 7 8 9 10 11 12; do
+    # Formatear mes con dos dígitos
+    mes_formateado=$(printf "%02d" $mes)
+    
+    # Procesar cada estación (ENP1 a ENP9)
+    for estacion in {1..9}; do
+        archivo="${BASE_PATH}2022-${mes_formateado}-ENP${estacion}-L1.CSV"
+        
+        if [ -f "$archivo" ]; then
+            
+            # Extraer coordenadas 
+            if [ -z "${datos_estaciones["ENP${estacion}_lat"]}" ]; then
+                coords=$(grep "Lat" "$archivo" | head -n 1)
+                latitud=$(echo "$coords" | awk -F'Lat ' '{print $2}' | awk '{print $1}' | tr -d ',N')
+                longitud=$(echo "$coords" | awk -F'Lon ' '{print $2}' | awk '{print $1}' | tr -d ',W')
+                longitud="-$longitud"
+                datos_estaciones["ENP${estacion}_lat"]=$latitud
+                datos_estaciones["ENP${estacion}_lon"]=$longitud
+            fi
+            
+            # Procesar datos (omitir primeras 8 líneas)
+            datos=$(tail -n +9 "$archivo")
+            
+            # Temperatura máxima (dejar vacío si no hay datos)
+            tmax_mes=$(echo "$datos" | awk -F',' '{if ($2 ~ /^[0-9.]+$/) print $2}' | sort -nr | head -n 1)
+            datos_estaciones["ENP${estacion}_2022-${mes_formateado}_tmax"]=$tmax_mes
+            
+            # Precipitación máxima (dejar vacío si no hay datos)
+            pmax_mes=$(echo "$datos" | awk -F',' '{if ($9 ~ /^[0-9.]+$/) print $9}' | sort -nr | head -n 1)
+            datos_estaciones["ENP${estacion}_2022-${mes_formateado}_pmax"]=$pmax_mes
+        fi
+    done
+done
+
+# Generar salida ordenada por mes
+for mes in 01 02 03 04 05 06 07 08 09 10 11 12; do
+    for estacion in {1..9}; do
+        latitud=${datos_estaciones["ENP${estacion}_lat"]}
+        longitud=${datos_estaciones["ENP${estacion}_lon"]}
+        tmax=${datos_estaciones["ENP${estacion}_2022-${mes}_tmax"]}
+        pmax=${datos_estaciones["ENP${estacion}_2022-${mes}_pmax"]}
+        
+        if [ -n "$latitud" ] && [ -n "$longitud" ]; then
+            # Si no hay datos, dejar el campo vacío
+            echo "ENP${estacion},$longitud,$latitud,${tmax:-},${pmax:-},2022-${mes}" >> "$OUTPUT_FILE"
+        fi
+    done
+done
+
+echo "Procesamiento completado. Resultados en $OUTPUT_FILE"
